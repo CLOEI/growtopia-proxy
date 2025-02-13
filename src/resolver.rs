@@ -1,4 +1,5 @@
 use log::{error, info};
+use serde::Deserialize;
 use serde_json::Value;
 use ureq::Error;
 
@@ -31,7 +32,14 @@ pub fn resolve_ip(domain: &str) -> Option<String> {
     }
 }
 
-pub fn resolve_server_data(ip: &str) -> Option<String> {
+#[derive(Deserialize, Debug)]
+pub struct ServerDataInput {
+    version: String,
+    platform: String,
+    protocol: String,
+}
+
+pub fn resolve_server_data(ip: &str, input: ServerDataInput) -> Option<String> {
     let agent = ureq::Agent::new_with_config(
         ureq::Agent::config_builder()
             .tls_config(ureq::tls::TlsConfig::builder().disable_verification(true).build())
@@ -42,8 +50,9 @@ pub fn resolve_server_data(ip: &str) -> Option<String> {
     info!("Querying {}", query);
     let response = agent.post(&query)
         .header("Host", "www.growtopia1.com")
+        .header("Content-Type", "application/x-www-form-urlencoded")
         .header("User-Agent", "UbiServices_SDK_2022.Release.9_PC64_ansi_static")
-        .send_empty();
+        .send(format!("version={}&platform={}&protocol={}", input.version, input.platform, input.protocol));
 
     match response {
         Ok(mut resp) => {

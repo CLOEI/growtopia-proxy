@@ -3,12 +3,14 @@ mod resolver;
 use std::{env, thread};
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use axum::http::StatusCode;
-use axum::Router;
+use axum::http::{HeaderMap, Response, StatusCode, Uri};
+use axum::response::{Html, IntoResponse};
+use axum::{Form, Router};
 use axum::routing::post;
 use axum_server::tls_rustls::RustlsConfig;
 use log::info;
 use serde_json::Value;
+use serde::Deserialize;
 
 fn main() {
     #[cfg(debug_assertions)]
@@ -45,9 +47,10 @@ async fn setup_webserver() {
         .unwrap();
 }
 
-async fn server_data() -> (StatusCode, String) {
-    info!("Received request for server data");
+async fn server_data(header_map: HeaderMap, Form(input): Form<resolver::ServerDataInput>) -> Html<String> {
+    info!("Received server_data request: {:?}", &input);
+    info!("Headers: {:?}", header_map);
     let ip = resolver::resolve_ip("www.growtopia1.com").unwrap();
-    let server_data = resolver::resolve_server_data(&ip).unwrap();
-    (StatusCode::OK, server_data)
+    let server_data = resolver::resolve_server_data(&ip, input).unwrap();
+    Html(server_data)
 }
