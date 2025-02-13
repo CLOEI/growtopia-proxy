@@ -13,3 +13,4 @@ tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
 axum-server = { version = "0.7.1", features = ["tls-rustls"]}
 rustls = { version = "0.23.23", features = ["ring"] }
 serde = { version = "1.0.217", features = ["derive"] }
+rusty_enet = { git = "https://github.com/CLOEI/rusty_enet.git" }

@@ -2,6 +2,7 @@ use log::{error, info};
 use serde::Deserialize;
 use serde_json::Value;
 use ureq::Error;
+use crate::utils::text_parse::{map_to_string, parse_and_store_as_map};
 
 pub fn resolve_ip(domain: &str) -> Option<String> {
     let doh_response = ureq::get("https://1.1.1.1/dns-query")
@@ -60,7 +61,10 @@ pub fn resolve_server_data(ip: &str, input: ServerDataInput) -> Option<String> {
             match body {
                 Ok(body) => {
                     info!("Server data: {}", body);
-                    Some(body)
+                    let mut parsed = parse_and_store_as_map(&body);
+                    parsed.insert("server".to_string(), "127.0.0.1".to_string());
+                    parsed.insert("port".to_string(), "17176".to_string());
+                    Some(map_to_string(&parsed))
                 }
                 Err(e) => {
                     error!("Failed to read response body: {}", e);
