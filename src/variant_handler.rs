@@ -39,6 +39,11 @@ pub fn handle(data: &[u8], tank_packet: &mut TankPacket, packet_id: &[u8]) -> Op
             let packet = Packet::new(&*data, rusty_enet::PacketKind::Reliable);
             Some(packet)
         }
+        "OnConsoleMessage" => {
+            let message = variant.get(1).unwrap().as_string();
+            info!("Received console message: {}", message);
+            None
+        }
         _ => {
             None
         }

@@ -69,7 +69,7 @@ pub fn handle(packet: &mut Packet, is_client: bool) {
             }
         },
         EPacketType::NetMessageGameMessage => {
-            let message = String::from_utf8(Vec::from(data)).unwrap();
+            let message = String::from_utf8_lossy(&data);
             info!("{} Received message: {}", if is_client { "Client" } else { "Server" }, message);
             if message.contains("action|quit") {
                 disconnect(false);
@@ -80,7 +80,7 @@ pub fn handle(packet: &mut Packet, is_client: bool) {
             }
         }
         EPacketType::NetMessageGenericText => {
-            let message = String::from_utf8(Vec::from(data)).unwrap();
+            let message = String::from_utf8_lossy(&data);
             info!("{} Received generic text: {}", if is_client { "Client" } else { "Server" }, message);
         }
         _ => {}
