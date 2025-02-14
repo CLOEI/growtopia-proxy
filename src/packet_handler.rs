@@ -69,14 +69,19 @@ pub fn handle(packet: &mut Packet, is_client: bool) {
             }
         },
         EPacketType::NetMessageGameMessage => {
-            let message = String::from_utf8_lossy(&data);
+            let message = String::from_utf8(Vec::from(data)).unwrap();
             info!("{} Received message: {}", if is_client { "Client" } else { "Server" }, message);
             if message.contains("action|quit") {
                 disconnect(false);
                 disconnect(true);
                 *global().server_peer_id.lock().unwrap() = None;
                 *global().client_peer_id.lock().unwrap() = None;
+                return;
             }
+        }
+        EPacketType::NetMessageGenericText => {
+            let message = String::from_utf8(Vec::from(data)).unwrap();
+            info!("{} Received generic text: {}", if is_client { "Client" } else { "Server" }, message);
         }
         _ => {}
     }
