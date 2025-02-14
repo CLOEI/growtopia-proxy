@@ -15,7 +15,7 @@ pub fn setup() {
         socket,
         enet::HostSettings {
             peer_limit: 1,
-            channel_limit: 1,
+            channel_limit: 2,
             compressor: Some(Box::new(enet::RangeCoder::new())),
             checksum: Some(Box::new(enet::crc32)),
             using_new_packet: true,
@@ -62,6 +62,6 @@ pub fn setup() {
                 }
             }
         }
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(16));
     }
 }

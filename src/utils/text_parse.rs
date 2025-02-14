@@ -20,3 +20,7 @@ pub fn parse_and_store_as_map(input: &str) -> HashMap<String, String> {
 pub fn map_to_string(map: &HashMap<String, String>) -> String {
     map.iter().map(|(k, v)| format!("{}|{}", k, v)).collect::<Vec<String>>().join("\n")
 }
+
+pub fn vec_to_string(vec: &Vec<String>) -> String {
+    vec.join("|")
+}

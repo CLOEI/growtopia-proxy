@@ -223,4 +223,8 @@ impl VariantList {
     pub fn get(&self, index: usize) -> Option<&Variant> {
         self.variants.get(index)
     }
+
+    pub fn set(&mut self, index: usize, variant: Variant) {
+        self.variants[index] = variant;
+    }
 }

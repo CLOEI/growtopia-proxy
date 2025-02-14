@@ -97,7 +97,7 @@ async fn server_data(header_map: HeaderMap, Form(input): Form<resolver::ServerDa
     info!("ENet client connecting to server: {}", address);
     if let Some(mut host) = global().client_enet_host.lock().unwrap().as_mut() {
         let address = SocketAddr::from_str(&address).unwrap();
-        match host.connect(address, 1, 0) {
+        match host.connect(address, 2, 0) {
             Ok(..) => {
                 info!("ENet client connected to server");
             }

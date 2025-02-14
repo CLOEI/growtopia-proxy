@@ -16,7 +16,7 @@ pub fn setup() {
         socket,
         enet::HostSettings {
             peer_limit: 1,
-            channel_limit: 1,
+            channel_limit: 2,
             compressor: Some(Box::new(enet::RangeCoder::new())),
             checksum: Some(Box::new(enet::crc32)),
             using_new_packet_server: true,
@@ -39,12 +39,29 @@ pub fn setup() {
         if let Some(event) = event  {
             match event {
                 enet::EventNoRef::Connect { peer, .. } => {
-                    info!("Peer {} connected", peer.0);
+                    info!("Server Peer {} connected", peer.0);
                     global().server_peer_id.lock().unwrap().replace(peer);
+                    // let mut server_host = global().server_enet_host.lock().unwrap();
+                    // let peer_id = global().server_peer_id.lock().unwrap();
+                    // if let Some(server_host) = &mut *server_host {
+                    //     if let Some(peer_id) = &*peer_id {
+                    //         let peer = server_host.peer_mut(*peer_id);
+                    //         peer.set_timeout(0, 12000, 0);
+                    //     }
+                    // }
                 }
                 enet::EventNoRef::Disconnect { peer, .. } => {
-                    info!("Peer {} disconnected", peer.0);
+                    info!("Server Peer {} disconnected", peer.0);
                     global().server_peer_id.lock().unwrap().take();
+                    let mut client_host = global().client_enet_host.lock().unwrap();
+                    let peer_id = global().client_peer_id.lock().unwrap();
+                    if let Some(client_host) = &mut *client_host {
+                        if let Some(peer_id) = &*peer_id {
+                            let peer = client_host.peer_mut(*peer_id);
+                            peer.disconnect(0);
+                        }
+                        client_host.flush();
+                    }
                 }
                 enet::EventNoRef::Receive {
                     peer,
@@ -56,6 +73,6 @@ pub fn setup() {
                 }
             }
         }
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(16));
     }
 }
