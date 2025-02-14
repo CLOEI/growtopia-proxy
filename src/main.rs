@@ -1,5 +1,9 @@
 mod resolver;
 mod utils;
+mod enet;
+mod types;
+mod packet_handler;
+mod variant_handler;
 
 use std::{env, thread};
 use std::collections::HashMap;
@@ -13,18 +17,18 @@ use axum_server::tls_rustls::RustlsConfig;
 use log::{error, info};
 use serde_json::Value;
 use serde::Deserialize;
-use std::str::FromStr;
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
-use rusty_enet as enet;
+use rusty_enet;
+use std::str::FromStr;
 use crate::utils::text_parse::{map_to_string, parse_and_store_as_map};
 
 struct GlobalData {
     server_data: Mutex<HashMap<String, String>>,
-    server_enet_host: Mutex<Option<enet::Host<UdpSocket>>>,
-    server_peer_id: Mutex<Option<enet::PeerID>>,
-    client_enet_host: Mutex<Option<enet::Host<UdpSocket>>>,
-    client_peer_id: Mutex<Option<enet::PeerID>>,
+    server_enet_host: Mutex<Option<rusty_enet::Host<UdpSocket>>>,
+    server_peer_id: Mutex<Option<rusty_enet::PeerID>>,
+    client_enet_host: Mutex<Option<rusty_enet::Host<UdpSocket>>>,
+    client_peer_id: Mutex<Option<rusty_enet::PeerID>>,
 }
 
 fn global() -> &'static GlobalData {
@@ -48,15 +52,15 @@ fn main() {
     info!("Growtopia Proxy started");
 
     thread::spawn(|| {
+        enet::server::setup();
+    });
+
+    thread::spawn(|| {
+        enet::client::setup();
+    });
+
+    thread::spawn(|| {
         setup_webserver();
-    });
-
-    thread::spawn(|| {
-        setup_enet_server();
-    });
-
-    thread::spawn(|| {
-        setup_enet_client();
     });
 
     loop {}
@@ -106,151 +110,4 @@ async fn server_data(header_map: HeaderMap, Form(input): Form<resolver::ServerDa
     parsed.insert("server".to_string(), "127.0.0.1".to_string());
     parsed.insert("port".to_string(), "17176".to_string());
     Html(map_to_string(&parsed))
-}
-
-fn setup_enet_server() {
-    info!("Running ENet server");
-    let socket = UdpSocket::bind(SocketAddr::from_str("127.0.0.1:17176").unwrap()).expect("Failed to bind UDP socket");
-    let mut host = enet::Host::new(
-        socket,
-        enet::HostSettings {
-            peer_limit: 1,
-            channel_limit: 1,
-            compressor: Some(Box::new(enet::RangeCoder::new())),
-            checksum: Some(Box::new(enet::crc32)),
-            using_new_packet_server: true,
-            ..Default::default()
-        },
-    ).expect("Failed to create ENet Server Host");
-
-    global().server_enet_host.lock().unwrap().replace(host);
-
-    loop {
-        let event = {
-            let mut host = global().server_enet_host.lock().unwrap();
-            if let Some(host) = &mut *host {
-                host.service().ok().flatten().map(|e| e.no_ref())
-            } else {
-                break;
-            }
-        };
-
-        if let Some(event) = event  {
-            match event {
-                enet::EventNoRef::Connect { peer, .. } => {
-                    info!("Peer {} connected", peer.0);
-                    global().server_peer_id.lock().unwrap().replace(peer);
-                }
-                enet::EventNoRef::Disconnect { peer, .. } => {
-                    info!("Peer {} disconnected", peer.0);
-                    global().server_peer_id.lock().unwrap().take();
-                }
-                enet::EventNoRef::Receive {
-                    peer,
-                    packet,
-                    ..
-                } => {
-                    global().server_peer_id.lock().unwrap().replace(peer);
-                    info!("Received packet from peer Server");
-                    if let Ok(peer_id) = global().client_peer_id.lock() {
-                        if let Some(peer_id) = *peer_id {
-                            if let Ok(mut host) = global().client_enet_host.lock() {
-                                let mut host = host.as_mut().unwrap();
-                                let peer = host.peer_mut(peer_id);
-                                if let Err(err) = peer.send(0, &packet) {
-                                    error!("Server failed sending packet to client: {}", err);
-                                } else {
-                                    info!("Server sent packet to peer client");
-                                }
-                            } else {
-                                error!("Server failed to send packet to client: Client host is None");
-                            }
-                        } else {
-                            error!("Server failed to send packet to client: Client peer ID is None");
-                        }
-                    } else {
-                        error!("Server failed to send packet to client: Client peer ID lock failed");
-                    }
-                }
-            }
-        }
-        thread::sleep(Duration::from_millis(10));
-    }
-}
-
-pub fn setup_enet_client() {
-    info!("Running ENet client");
-    let socket = UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0)).expect("Failed to bind UDP socket");
-    let host = enet::Host::<UdpSocket>::new(
-        socket,
-        enet::HostSettings {
-            peer_limit: 1,
-            channel_limit: 1,
-            compressor: Some(Box::new(enet::RangeCoder::new())),
-            checksum: Some(Box::new(enet::crc32)),
-            using_new_packet: true,
-            ..Default::default()
-        },
-    ).expect("Failed to create ENet Client Host");
-
-    global().client_enet_host.lock().unwrap().replace(host);
-
-    loop {
-        {
-            let server_peer_id = global().server_peer_id.lock().unwrap();
-            if server_peer_id.is_none() {
-                continue;
-            }
-        }
-
-        let event = {
-            let mut host = global().client_enet_host.lock().unwrap();
-            if let Some(host) = &mut *host {
-                host.service().ok().flatten().map(|e| e.no_ref())
-            } else {
-                break;
-            }
-        };
-
-        if let Some(event) = event {
-            match event {
-                enet::EventNoRef::Connect { peer, .. } => {
-                    println!("Peer {} connected", peer.0);
-                    global().client_peer_id.lock().unwrap().replace(peer);
-                }
-                enet::EventNoRef::Disconnect { peer, .. } => {
-                    println!("Peer {} disconnected", peer.0);
-                    global().client_peer_id.lock().unwrap().take();
-                }
-                enet::EventNoRef::Receive {
-                    peer,
-                    packet,
-                    ..
-                } => {
-                    global().client_peer_id.lock().unwrap().replace(peer);
-                    info!("Peer Client received packet");
-                    if let Ok(peer_id) = global().server_peer_id.lock() {
-                        if let Some(peer_id) = *peer_id {
-                            if let Ok(mut host) = global().server_enet_host.lock() {
-                                let mut host = host.as_mut().unwrap();
-                                let peer = host.peer_mut(peer_id);
-                                if let Err(err) = peer.send(0, &packet) {
-                                    error!("Client failed sending packet to server: {}", err);
-                                } else {
-                                    info!("Client sent packet to peer server");
-                                }
-                            } else {
-                                error!("Client failed to send packet to server: Server host is None");
-                            }
-                        } else {
-                            error!("Client failed to send packet to server: Server peer ID is None");
-                        }
-                    } else {
-                        error!("Client failed to send packet to server: Server peer ID lock failed");
-                    }
-                }
-            }
-        }
-        thread::sleep(Duration::from_millis(10));
-    }
 }
