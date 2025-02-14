@@ -61,10 +61,7 @@ pub fn resolve_server_data(ip: &str, input: ServerDataInput) -> Option<String> {
             match body {
                 Ok(body) => {
                     info!("Server data: {}", body);
-                    let mut parsed = parse_and_store_as_map(&body);
-                    parsed.insert("server".to_string(), "127.0.0.1".to_string());
-                    parsed.insert("port".to_string(), "17176".to_string());
-                    Some(map_to_string(&parsed))
+                    Some(body)
                 }
                 Err(e) => {
                     error!("Failed to read response body: {}", e);
