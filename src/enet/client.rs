@@ -51,6 +51,7 @@ pub fn setup() {
                 enet::EventNoRef::Disconnect { peer, .. } => {
                     info!("Client Peer {} disconnected", peer.0);
                     global().client_peer_id.lock().unwrap().take();
+                    packet_handler::disconnect(false);
                 }
                 enet::EventNoRef::Receive {
                     peer,

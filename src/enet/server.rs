@@ -19,7 +19,7 @@ pub fn setup() {
             channel_limit: 2,
             compressor: Some(Box::new(enet::RangeCoder::new())),
             checksum: Some(Box::new(enet::crc32)),
-            using_new_packet_server: true,
+            using_new_packet_server: false,
             ..Default::default()
         },
     ).expect("Failed to create ENet Server Host");
@@ -41,14 +41,14 @@ pub fn setup() {
                 enet::EventNoRef::Connect { peer, .. } => {
                     info!("Server Peer {} connected", peer.0);
                     global().server_peer_id.lock().unwrap().replace(peer);
-                    let mut server_host = global().server_enet_host.lock().unwrap();
-                    let peer_id = global().server_peer_id.lock().unwrap();
-                    if let Some(server_host) = &mut *server_host {
-                        if let Some(peer_id) = &*peer_id {
-                            let peer = server_host.peer_mut(*peer_id);
-                            peer.set_timeout(0, 12000, 0);
-                        }
-                    }
+                    // let mut server_host = global().server_enet_host.lock().unwrap();
+                    // let peer_id = global().server_peer_id.lock().unwrap();
+                    // if let Some(server_host) = &mut *server_host {
+                    //     if let Some(peer_id) = &*peer_id {
+                    //         let peer = server_host.peer_mut(*peer_id);
+                    //         peer.set_timeout(0, 12000, 0);
+                    //     }
+                    // }
                 }
                 enet::EventNoRef::Disconnect { peer, .. } => {
                     info!("Server Peer {} disconnected", peer.0);

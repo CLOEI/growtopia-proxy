@@ -9,10 +9,13 @@ A utility for Growtopia
 ### Usage
 Add an entry to the Host file replacing `www.growtopia1.com` and `www.growtopia.com` to point to your desired IP address.
 
+Then run it by using `cargo run --release`.
 ### Current issue
-Currently, proxy able to pass the subserver switching, but after that the server peer would send a quit packet. Let me know if you have any idea about this. 
+Currently, proxy able to pass the subserver switching, but after that the server peer would just disconnect later on. Let me know if you have any idea about this. 
 
 There's also a issue with updating item database, server peer would just disconnect after the client peer send item database data.
+
+Both issue already solved by removing type2 in the http data and disabling `use_packet_server`. It would be better if we can find out what type2 is and what it does.
 
 Discord: `.cendy`
 

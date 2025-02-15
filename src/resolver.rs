@@ -61,7 +61,10 @@ pub fn resolve_server_data(ip: &str, input: ServerDataInput) -> Option<String> {
             match body {
                 Ok(body) => {
                     info!("Server data: {}", body);
-                    Some(body)
+                    let mut modified = parse_and_store_as_map(&body);
+                    modified.remove("type2");
+                    let modified = map_to_string(&modified);
+                    Some(format!("{}", modified))
                 }
                 Err(e) => {
                     error!("Failed to read response body: {}", e);
