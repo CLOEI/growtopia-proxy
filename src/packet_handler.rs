@@ -68,8 +68,10 @@ pub fn handle(packet: &mut Packet, is_client: bool) {
         EPacketType::NetMessageGameMessage => {
             let message = String::from_utf8_lossy(&data);
             info!("{} Received message: {}", if is_client { "Client" } else { "Server" }, message);
-            if message == "action|quit" {
+            if message.contains("action|quit") && !message.contains("exit") {
+                disconnect(true);
                 disconnect(false);
+                return;
             }
         }
         EPacketType::NetMessageGenericText => {
@@ -124,7 +126,7 @@ pub fn disconnect(is_client: bool) {
     };
 
     let mut host = host_lock.lock().unwrap();
-    let peer_id = peer_id_lock.lock().unwrap();
+    let mut peer_id = peer_id_lock.lock().unwrap();
     if let Some(host) = &mut *host {
         if let Some(peer_id) = &*peer_id {
             let peer = host.peer_mut(*peer_id);
@@ -132,4 +134,5 @@ pub fn disconnect(is_client: bool) {
         }
         host.flush();
     }
+    peer_id.take();
 }
