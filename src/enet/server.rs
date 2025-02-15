@@ -41,27 +41,19 @@ pub fn setup() {
                 enet::EventNoRef::Connect { peer, .. } => {
                     info!("Server Peer {} connected", peer.0);
                     global().server_peer_id.lock().unwrap().replace(peer);
-                    // let mut server_host = global().server_enet_host.lock().unwrap();
-                    // let peer_id = global().server_peer_id.lock().unwrap();
-                    // if let Some(server_host) = &mut *server_host {
-                    //     if let Some(peer_id) = &*peer_id {
-                    //         let peer = server_host.peer_mut(*peer_id);
-                    //         peer.set_timeout(0, 12000, 0);
-                    //     }
-                    // }
+                    let mut server_host = global().server_enet_host.lock().unwrap();
+                    let peer_id = global().server_peer_id.lock().unwrap();
+                    if let Some(server_host) = &mut *server_host {
+                        if let Some(peer_id) = &*peer_id {
+                            let peer = server_host.peer_mut(*peer_id);
+                            peer.set_timeout(0, 12000, 0);
+                        }
+                    }
                 }
                 enet::EventNoRef::Disconnect { peer, .. } => {
                     info!("Server Peer {} disconnected", peer.0);
                     global().server_peer_id.lock().unwrap().take();
-                    let mut client_host = global().client_enet_host.lock().unwrap();
-                    let peer_id = global().client_peer_id.lock().unwrap();
-                    if let Some(client_host) = &mut *client_host {
-                        if let Some(peer_id) = &*peer_id {
-                            let peer = client_host.peer_mut(*peer_id);
-                            peer.disconnect(0);
-                        }
-                        client_host.flush();
-                    }
+                    packet_handler::disconnect(true);
                 }
                 enet::EventNoRef::Receive {
                     peer,

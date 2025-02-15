@@ -43,6 +43,11 @@ pub fn handle(data: &[u8], tank_packet: &mut TankPacket, packet_id: &[u8]) -> Op
             let message = variant.get(1).unwrap().as_string();
             info!("Received console message: {}", message);
             None
+        },
+        "OnDialogRequest" => {
+            let message = variant.get(1).unwrap().as_string();
+            info!("Received dialog request: {}", message);
+            None
         }
         _ => {
             None

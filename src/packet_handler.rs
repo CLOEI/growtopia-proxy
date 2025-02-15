@@ -9,9 +9,6 @@ use crate::{global, variant_handler};
 
 pub fn handle(packet: &mut Packet, is_client: bool) {
     let data = packet.data();
-    if data.len() < 4 {
-        return;
-    }
     let packet_id = LittleEndian::read_u32(&data[0..4]);
     let packet_type = EPacketType::from(packet_id);
     info!("{} Received {:?} packet", if is_client { "Client" } else { "Server" }, packet_type);
@@ -82,6 +79,10 @@ pub fn handle(packet: &mut Packet, is_client: bool) {
         EPacketType::NetMessageGenericText => {
             let message = String::from_utf8_lossy(&data);
             info!("{} Received generic text: {}", if is_client { "Client" } else { "Server" }, message);
+        },
+        EPacketType::NetMessageTrack => {
+            let message = String::from_utf8_lossy(&data);
+            info!("{} Received track: {}", if is_client { "Client" } else { "Server" }, message);
         }
         _ => {}
     }

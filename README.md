@@ -10,7 +10,11 @@ A utility for Growtopia
 Add an entry to the Host file replacing `www.growtopia1.com` and `www.growtopia.com` to point to your desired IP address.
 
 ### Current issue
-Currently, proxy able to pass the subserver switching, but after that the server peer would send a quit packet. Let me know if you have any idea about this. Discord: `.cendy`
+Currently, proxy able to pass the subserver switching, but after that the server peer would send a quit packet. Let me know if you have any idea about this. 
+
+There's also a issue with updating item database, server peer would just disconnect after the client peer send item database data.
+
+Discord: `.cendy`
 
 ### Generating certificates
 ```bash
