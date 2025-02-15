@@ -15,7 +15,7 @@ Currently, proxy able to pass the subserver switching, but after that the server
 
 There's also a issue with updating item database, server peer would just disconnect after the client peer send item database data.
 
-Both issue already solved by removing type2 in the http data and disabling `use_packet_server`. It would be better if we can find out what type2 is and what it does.
+Both issue already solved by changing type2 value to 0 in the http data and disabling `use_packet_server`. It would be better if we can find out what type2 is and what it does.
 
 Discord: `.cendy`
 

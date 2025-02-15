@@ -68,6 +68,9 @@ pub fn handle(packet: &mut Packet, is_client: bool) {
         EPacketType::NetMessageGameMessage => {
             let message = String::from_utf8_lossy(&data);
             info!("{} Received message: {}", if is_client { "Client" } else { "Server" }, message);
+            if message == "action|quit" {
+                disconnect(false);
+            }
         }
         EPacketType::NetMessageGenericText => {
             let message = String::from_utf8_lossy(&data);

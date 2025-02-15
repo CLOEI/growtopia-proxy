@@ -62,7 +62,7 @@ pub fn resolve_server_data(ip: &str, input: ServerDataInput) -> Option<String> {
                 Ok(body) => {
                     info!("Server data: {}", body);
                     let mut modified = parse_and_store_as_map(&body);
-                    modified.remove("type2");
+                    modified.insert("type2".to_string(), "0".to_string());
                     let modified = map_to_string(&modified);
                     Some(format!("{}", modified))
                 }
