@@ -2,6 +2,7 @@
 name = "growtopia-proxy"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/CLOEI/growtopia-proxy"
 
 [dependencies]
 ureq = { version = "3.0.5", features = ["json"] }
@@ -17,3 +18,8 @@ rusty_enet = { git = "https://github.com/CLOEI/rusty_enet.git" }
 serde_repr = "0.1.19"
 byteorder = "1.5.0"
 bincode = "1.3.3"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
