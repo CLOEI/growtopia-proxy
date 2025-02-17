@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 use log::info;
 use rusty_enet::Packet;
-use crate::global;
+use crate::{global, utils};
 use crate::packet_handler::resend_packet;
 use crate::types::epacket_type::EPacketType;
 use crate::types::tank_packet::TankPacket;
@@ -24,7 +24,8 @@ pub fn handle(data: &[u8], tank_packet: &mut TankPacket, packet_id: &[u8]) -> Op
             global_server_data.insert("port".to_string(), port.to_string());
 
             parsed_server_data[0] = "127.0.0.1".to_string();
-            variant.set(1, Variant::Signed(17176));
+            let enet_server_port = utils::config::get_enet_server_port();
+            variant.set(1, Variant::Signed(enet_server_port as i32));
             variant.set(4, Variant::String(text_parse::vec_to_string(&parsed_server_data)));
 
             let serialized = variant.serialize();

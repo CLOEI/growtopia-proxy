@@ -1,4 +1,4 @@
-use crate::{global, packet_handler};
+use crate::{global, packet_handler, utils};
 use std::net::{SocketAddr, UdpSocket};
 use std::thread;
 use std::time::Duration;
@@ -11,8 +11,9 @@ use byteorder::ByteOrder;
 
 pub fn setup() {
     info!("Running ENet server");
-    let socket = UdpSocket::bind(SocketAddr::from_str("127.0.0.1:17176").unwrap()).expect("Failed to bind UDP socket");
-    let mut host = enet::Host::new(
+    let port = utils::config::get_enet_server_port();
+    let socket = UdpSocket::bind(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).expect("Failed to bind UDP socket");
+    let host = enet::Host::new(
         socket,
         enet::HostSettings {
             peer_limit: 1,
@@ -41,14 +42,6 @@ pub fn setup() {
                 enet::EventNoRef::Connect { peer, .. } => {
                     info!("Server Peer {} connected", peer.0);
                     global().server_peer_id.lock().unwrap().replace(peer);
-                    // let mut server_host = global().server_enet_host.lock().unwrap();
-                    // let peer_id = global().server_peer_id.lock().unwrap();
-                    // if let Some(server_host) = &mut *server_host {
-                    //     if let Some(peer_id) = &*peer_id {
-                    //         let peer = server_host.peer_mut(*peer_id);
-                    //         peer.set_timeout(0, 12000, 0);
-                    //     }
-                    // }
                 }
                 enet::EventNoRef::Disconnect { peer, .. } => {
                     info!("Server Peer {} disconnected", peer.0);
@@ -65,6 +58,6 @@ pub fn setup() {
                 }
             }
         }
-        thread::sleep(Duration::from_millis(16));
+        thread::sleep(Duration::from_millis(10));
     }
 }

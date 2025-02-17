@@ -48,6 +48,7 @@ fn main() {
     env::set_var("RUST_LOG", env::var("RUST_LOG").unwrap_or_else(|_| "growtopia_proxy".to_string()));
 
     env_logger::init();
+    utils::config::init();
     rustls::crypto::ring::default_provider().install_default().expect("Failed to install rustls crypto provider");
     info!("Growtopia Proxy started");
 
@@ -69,6 +70,7 @@ fn main() {
 #[tokio::main]
 async fn setup_webserver() {
     info!("Running webserver");
+    let port = utils::config::get_web_server_port();
     let config = RustlsConfig::from_pem_file(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("certs")
@@ -79,7 +81,7 @@ async fn setup_webserver() {
     ).await.unwrap();
     let app = Router::new()
         .route("/growtopia/server_data.php", post(server_data));
-    let addr = SocketAddr::from(([127, 0, 0, 1], 443));
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
     axum_server::bind_rustls(addr, config)
         .serve(app.into_make_service())
         .await
@@ -107,7 +109,8 @@ async fn server_data(header_map: HeaderMap, Form(input): Form<resolver::ServerDa
         }
     }
     *data = parsed.clone();
+    let port = utils::config::get_enet_server_port();
     parsed.insert("server".to_string(), "127.0.0.1".to_string());
-    parsed.insert("port".to_string(), "17176".to_string());
+    parsed.insert("port".to_string(), port.to_string());
     Html(map_to_string(&parsed))
 }

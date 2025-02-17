@@ -4,3 +4,4 @@ pub mod packet_flag;
 pub mod tank_packet;
 pub mod player;
 pub mod vector2;
+pub mod config;
